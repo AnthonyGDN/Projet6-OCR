@@ -50,6 +50,10 @@ function SignIn({ setUser }) {
   const signUp = async () => {
     try {
       setIsLoading(true);
+      console.log('erreur test');
+      console.log(email);
+      console.log(password);
+      console.log(API_ROUTES.SIGN_UP);
       const response = await axios({
         method: 'POST',
         url: API_ROUTES.SIGN_UP,
@@ -58,6 +62,7 @@ function SignIn({ setUser }) {
           password,
         },
       });
+      console.log(response);
       if (!response?.data) {
         console.log('Something went wrong during signing up: ', response);
         return;
