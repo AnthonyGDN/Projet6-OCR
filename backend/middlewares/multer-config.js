@@ -3,47 +3,47 @@ const sharp = require('sharp');
 const path = require('path');
 const fs = require('fs');
 
-// Dictionnaire d’extensions en fonction du type MIME
+// Extension dictionary based on MIME type
 const MIME_TYPES = {
   'image/jpg': 'jpg',
   'image/jpeg': 'jpg',
   'image/png': 'png',
 };
 
-// On stocke d’abord le fichier en mémoire (Buffer)
+// First store the file in memory
 const storage = multer.memoryStorage();
 
-// Configuration de multer pour un seul champ nommé 'image'
+// Multer configuration for a single field named 'image'
 const upload = multer({ storage }).single('image');
 
 module.exports = (req, res, next) => {
-  // D’abord, on exécute multer pour récupérer le fichier en mémoire (req.file.buffer)
+  // Run multer to retrieve the file in memory
   upload(req, res, async (err) => {
     try {
-      // En cas d’erreur lors de l’upload
+      // In case of error during upload
       if (err) {
         return res.status(400).json({ error: err.message });
       }
 
-      // Si aucun fichier n'a été envoyé, on passe au middleware suivant
+      // If no file has been sent, we move on to the next middleware
       if (!req.file) {
         return next();
       }
 
-      // Génère un nom de fichier unique
+      // Generates a unique file name
       const extension = MIME_TYPES[req.file.mimetype] || '';
       const filename = `${req.file.fieldname}-${Date.now()}.${extension}`;
 
-      // Traite l'image avec Sharp (ex. redimension : 800px de large, conversion en jpeg qualité 80)
+      // Process the image with Sharp
       await sharp(req.file.buffer)
         .resize({ width: 800 })
         .jpeg({ quality: 80 })
         .toFile(path.join('images', filename));
 
-      // On met à jour req.file pour que le contrôleur sache quel nom de fichier utiliser
+      // Update req.file so the controller knows what filename to use
       req.file.filename = filename;
 
-      // Middleware suivant (createBook, modifyBook, etc.)
+      // Next middleware
       next();
     } catch (error) {
       return res.status(500).json({ error: error.message });
