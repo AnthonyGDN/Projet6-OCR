@@ -40,7 +40,13 @@ function SignIn({ setUser }) {
       }
     } catch (err) {
       console.log(err);
-      setNotification({ error: true, message: err.message });
+      // Check if there is a response from the API and an 'error' field
+      if (err.response && err.response.data && err.response.data.error) {
+        setNotification({ error: true, message: err.response.data.error });
+      } else {
+        // Otherwise, the default error message is used.
+        setNotification({ error: true, message: err.message });
+      }
       console.log('Some error occured during signing in: ', err);
     } finally {
       setIsLoading(false);
@@ -48,12 +54,22 @@ function SignIn({ setUser }) {
   };
 
   const signUp = async () => {
+    // Password length check
+    if (password.length < 4) {
+      setNotification({ error: true, message: 'Le mot de passe doit faire au moins 4 caractères.' });
+      return; // On arrête la fonction pour ne pas lancer la requête
+    }
+
+    // Checking the validity of the email
+    // At a minimum, check for the presence of the '@'
+    const emailPattern = /\S+@\S+\.\S+/;
+    if (!emailPattern.test(email)) {
+      setNotification({ error: true, message: 'Veuillez entrer une adresse email valide.' });
+      return;
+    }
+
     try {
       setIsLoading(true);
-      console.log('erreur test');
-      console.log(email);
-      console.log(password);
-      console.log(API_ROUTES.SIGN_UP);
       const response = await axios({
         method: 'POST',
         url: API_ROUTES.SIGN_UP,
@@ -69,8 +85,16 @@ function SignIn({ setUser }) {
       }
       setNotification({ error: false, message: 'Votre compte a bien été créé, vous pouvez vous connecter' });
     } catch (err) {
-      setNotification({ error: true, message: err.message });
-      console.log('Some error occured during signing up: ', err);
+      console.log('Erreur capturée lors de la création du compte:', err);
+
+      // Retrieve the message returned by the backend
+      if (err.response && err.response.data && err.response.data.error) {
+        console.log('Message d\'erreur reçu du serveur:', err.response.data.error);
+        setNotification({ error: true, message: err.response.data.error });
+      } else {
+        // Otherwise, default error message
+        setNotification({ error: true, message: err.message });
+      }
     } finally {
       setIsLoading(false);
     }

@@ -8,7 +8,7 @@ module.exports = (req, res, next) => {
   try {
     // Verify that the Authorization header is present.
     if (!req.headers.authorization) {
-      return res.status(401).json({ error: 'Missing Authorization header' });
+      return res.status(403).json({ error: 'Missing Authorization header' });
     }
 
     // Split the header to isolate the token string ("Bearer <token>").

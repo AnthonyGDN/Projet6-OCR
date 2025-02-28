@@ -1,4 +1,4 @@
-const http = require('https');
+const http = require('http');
 const app = require('./app');
 
 /*
@@ -15,8 +15,8 @@ const normalizePort = val => {
   return false;
 };
 
-// Determine the port to listen on, default to 3000 if not set in environment variables.
-const port = normalizePort(process.env.PORT || '3000');
+// Determine the port to listen on, default to 5000 if not set in environment variables.
+const port = normalizePort(process.env.PORT || '5000');
 app.set('port', port);
 
 /*

@@ -6,6 +6,7 @@ const User = require('../models/user.model');
 
 // Signup function: hashes the password, creates a new user in the database.
 exports.signup = (req, res, next) => {
+  console.log('signup route reached');
   // Hash the user's password with a cost of 10.
   bcrypt.hash(req.body.password, 10)
     .then(hashedPassword => {
@@ -16,13 +17,29 @@ exports.signup = (req, res, next) => {
       });
       // Save the user in the database.
       user.save()
-        // If everything went fine, we return a success message.
-        .then(() => res.status(201).json({ message: 'Utilisateur créé !' }))
-        // If there's a validation or database error, respond with a 400 status.
-        .catch(error => res.status(400).json({ error }));
-    })
-    // If hashing fails or there's an internal issue, return a 500 status.
-    .catch(error => res.status(500).json({ error }));
+      .then(() => res.status(201).json({ message: 'Utilisateur créé !' }))
+      .catch(error => {
+        // email already exists
+        if (error.code === 11000) {
+          return res.status(400).json({ error: 'Un compte avec cet e-mail existe déjà.' });
+        }
+
+        // ValidationError 
+        if (error.name === 'ValidationError' && error.message.includes('expected `email` to be unique')) {
+          return res.status(400).json({ error: 'Un compte avec cet e-mail existe déjà.' });
+        }
+
+        // Otherwise, the raw error or a more generic message is returned
+        console.error('[signup error]', error);
+        return res.status(400).json({
+          error: error.message || 'Erreur lors de la création du compte.'
+        });
+      });
+  })
+  .catch(error => {
+    console.error('[bcrypt error]', error);
+    return res.status(500).json({ error });
+  });
 };
 
 // Login function: checks user credentials and returns a signed JWT on success.
