@@ -49,23 +49,33 @@ exports.getOneBook = (req, res, next) => {
 
 // Creates a new book, using the uploaded image and the data parsed from req.body.book.
 exports.createBook = (req, res, next) => {
-  // Parse the stringified book object sent by the frontend.
   const bookObject = JSON.parse(req.body.book);
-  delete bookObject._id; // Security measure, in case an _id was included
-
-  // Construct the image URL based on the file uploaded by Multer.
+  // bookObject.rating contiendra la note transmise
+  const rating = parseInt(bookObject.rating, 10) || 0;
+  
+  let ratings = [];
+  let averageRating = 0;
+  if (rating > 0) {
+    // On enregistre une seule note : celle de l'utilisateur qui crée
+    ratings.push({ userId: req.auth.userId, grade: rating });
+    averageRating = rating;
+  }
+  
   const imageUrl = `${req.protocol}://${req.get('host')}/images/${req.file.filename}`;
-
-  // Initialize the new Book with the current user's ID, empty ratings, and averageRating=0.
+  
+  // On crée le livre
   const book = new Book({
-    ...bookObject,
+    title: bookObject.title,
+    author: bookObject.author,
+    year: bookObject.year,
+    genre: bookObject.genre,
     userId: req.auth.userId,
     imageUrl: imageUrl,
-    ratings: [],
-    averageRating: 0
+    ratings: ratings,
+    averageRating: averageRating,
   });
-
-  // Save the book in the database.
+  
+  // On sauvegarde
   book.save()
     .then(() => res.status(201).json({ message: 'Livre enregistré !' }))
     .catch(error => res.status(400).json({ error }));
@@ -161,19 +171,17 @@ exports.rateBook = (req, res, next) => {
 
       // Recompute the average rating
       const total = book.ratings.reduce((sum, r) => sum + r.grade, 0);
-      book.averageRating = total / book.ratings.length;
+      book.averageRating = parseFloat(
+        (total / book.ratings.length).toFixed(1)
+      );      
 
       // Save changes in the database
-      book.save()
-        .then(updated => {
-          // Convert _id to id for the frontend
-          const formattedBook = {
-            ...updated._doc,
-            id: updated._id.toString(),
-          };
-          res.status(200).json(formattedBook);
-        })
-        .catch(error => res.status(400).json({ error }));
+      return book.save();
     })
-    .catch(error => res.status(500).json({ error }));
+    .then((updated) => {
+      // Convert _id en id pour le front
+      const formattedBook = { ...updated._doc, id: updated._id.toString() };
+      res.status(200).json(formattedBook);
+    })
+    .catch((error) => res.status(500).json({ error }));
 };
