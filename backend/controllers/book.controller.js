@@ -50,20 +50,19 @@ exports.getOneBook = (req, res, next) => {
 // Creates a new book, using the uploaded image and the data parsed from req.body.book.
 exports.createBook = (req, res, next) => {
   const bookObject = JSON.parse(req.body.book);
-  // bookObject.rating contiendra la note transmise
+  // bookObject.rating will contain the passed rating
   const rating = parseInt(bookObject.rating, 10) || 0;
   
   let ratings = [];
   let averageRating = 0;
   if (rating > 0) {
-    // On enregistre une seule note : celle de l'utilisateur qui crée
     ratings.push({ userId: req.auth.userId, grade: rating });
     averageRating = rating;
   }
   
   const imageUrl = `${req.protocol}://${req.get('host')}/images/${req.file.filename}`;
   
-  // On crée le livre
+  // Create the book
   const book = new Book({
     title: bookObject.title,
     author: bookObject.author,
@@ -75,7 +74,7 @@ exports.createBook = (req, res, next) => {
     averageRating: averageRating,
   });
   
-  // On sauvegarde
+  // Save
   book.save()
     .then(() => res.status(201).json({ message: 'Livre enregistré !' }))
     .catch(error => res.status(400).json({ error }));

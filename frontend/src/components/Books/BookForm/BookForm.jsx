@@ -1,4 +1,3 @@
-/* eslint-disable react/jsx-props-no-spreading */
 import React, { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import * as PropTypes from 'prop-types';
@@ -50,9 +49,7 @@ function BookForm({ book, validate }) {
         alert('Vous devez ajouter une image');
       }
       if (!data.rating) {
-        /* eslint-disable no-param-reassign */
         data.rating = 0;
-        /* eslint-enable no-param-reassign */
       }
       const newBook = await addBook(data);
       if (!newBook.error) {
